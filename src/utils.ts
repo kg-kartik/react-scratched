@@ -1,26 +1,77 @@
-import type {VNode,Child} from "./types.ts";
+import type { VNode, Child } from "./types.ts";
+import { patch } from "./diffingAlgo.ts";
 
-export const renderDom = (element:VNode, parentElement: HTMLElement | null = null) => {
-  const currentElement = document.createElement(element.type);
-  
-  // Apply props [Naive cases handlign]
-  Object.entries(element.props).forEach(([key, value]) => {
-    (currentElement as any)[key] = value;
-  });
-  
-  // Append to parent
-  if (parentElement) {
-    parentElement.appendChild(currentElement);
-  }
-  
-  // Process children
-  element.children.forEach((child:Child) => {
-    if (typeof child === 'string') {
-      currentElement.appendChild(document.createTextNode(child));
-    } else if (typeof child === 'object' && child.type) {
-      renderDom(child, currentElement);
+export const renderDom = (
+    element: VNode,
+    parentElement: HTMLElement | null = null,
+) => {
+    const currentElement = document.createElement(element.type);
+
+    // Apply props [Naive cases handlign]
+    Object.entries(element.props).forEach(([key, value]) => {
+        (currentElement as any)[key] = value;
+    });
+
+    // Append to parent
+    if (parentElement) {
+        parentElement.appendChild(currentElement);
     }
-  });
-  
-  return currentElement;
-}
+
+    // Process children
+    element.children.forEach((child: Child) => {
+        if (typeof child === "string") {
+            currentElement.appendChild(document.createTextNode(child));
+        } else if (typeof child === "object" && child.type) {
+            renderDom(child, currentElement);
+        }
+    });
+
+    return currentElement;
+};
+
+// keys Map (assuming all nodes to be VNode)
+export const reconcileKeyedChildren = (
+    oldNode: VNode,
+    newNode: VNode,
+    domNode: ChildNode,
+) => {
+    const keysMap: Map<VNode["key"], { oldChild: VNode; domChild: ChildNode }> =
+        new Map();
+
+    oldNode.children.forEach((oldChild, index) => {
+        if (typeof oldChild === "object" && oldChild?.key !== null) {
+            keysMap.set(oldChild.key, {
+                oldChild,
+                domChild: domNode.childNodes[index],
+            });
+        }
+    });
+
+    newNode.children.forEach((newChild, index) => {
+        if (typeof newChild !== "object" || newChild?.key === null) {
+            return;
+        }
+
+        const match = keysMap.get(newChild?.key);
+
+        if (match?.domChild instanceof HTMLElement) {
+            //Patch old child
+            patch(match.oldChild, newChild, match.domChild);
+
+            // Inserts the patched dom element before the current iterating node
+            domNode.insertBefore(match.domChild, domNode.childNodes[index]);
+
+            //deleting consumed key
+            keysMap.delete(newChild.key);
+        } else {
+            // key in new child but not in old child
+            const newChildElement = renderDom(newChild);
+            domNode.insertBefore(newChildElement, domNode.childNodes[index]);
+        }
+    });
+
+    //Keys still left in old child - those nodes no longer exist so need to be deleted
+    keysMap.forEach(({ domChild }) => {
+        domChild?.remove();
+    });
+};

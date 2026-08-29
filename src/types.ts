@@ -1,9 +1,12 @@
-export type Props = Record<string,any>;
+export type Props = Record<string, any>;
+
+export type Key = string | null;
 
 export type VNode = {
-  type: string;
-  props: Props;
-  children: Child[];
+    type: string;
+    key: string | null;
+    props: Props;
+    children: Child[];
 };
 
-export type Child = string | number | VNode;
+export type Child = string | VNode;

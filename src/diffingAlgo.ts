@@ -1,10 +1,37 @@
+import type { Child } from "./types.ts";
+import { renderDom } from "./utils.ts";
+import { reconcileKeyedChildren } from "./utils.ts";
 
-import type {VNode} from "./types.ts"
-import {renderDom} from "./utils.ts" 
+export const patch = (oldNode: Child, newNode: Child, domNode: ChildNode) => {
+    // textnode <-> textnode
+    if (typeof oldNode === "string" && typeof newNode === "string") {
+        if (oldNode !== newNode) {
+            domNode.textContent = newNode;
+        }
+        return;
+    }
 
-export const patch = (oldNode:VNode,newNode:VNode,domNode:HTMLElement) => {
+    // textnode <-> Vnode
+    if (typeof oldNode === "string" && typeof newNode === "object") {
+        const newElement = renderDom(newNode);
+        domNode.replaceWith(newElement);
+        return;
+    }
+
+    // Vnode <-> textnode
+    if (typeof oldNode === "object" && typeof newNode === "string") {
+        domNode.replaceWith(document.createTextNode(newNode));
+        return;
+    }
+
+    // Narrow down types for VNode Objects
+
+    if (!(domNode instanceof HTMLElement)) return;
+
+    if (typeof oldNode !== "object" || typeof newNode !== "object") return;
+
     //type change
-    if(oldNode.type !== newNode.type){
+    if (oldNode?.type !== newNode?.type) {
         const newElement = renderDom(newNode);
 
         domNode.replaceWith(newElement);
@@ -18,60 +45,77 @@ export const patch = (oldNode:VNode,newNode:VNode,domNode:HTMLElement) => {
 
     //prop there in oldNode but not in newNode or value is different
     oldNodeProps.forEach((prop) => {
-        if(prop in newNodeProps){
-            if(oldNode.props[prop] !== newNode.props[prop]){
-                (domNode as any)[prop] = newNode.props[prop];
+        if (prop in newNodeProps) {
+            if (oldNode.props[prop] !== newNode.props[prop]) {
+                domNode.setAttribute(prop, newNode.props[prop]);
             }
-        }else{
+        } else {
             domNode.removeAttribute(prop);
         }
-    })
+    });
 
     //prop there in newNode but not in oldNode
     newNodeProps.forEach((prop) => {
-        if(!(prop in oldNodeProps)){
-            (domNode as any)[prop] = newNode.props[prop]
+        if (!(prop in oldNodeProps)) {
+            (domNode as any)[prop] = newNode.props[prop];
         }
-    })
+    });
 
-    // Same number of children
-    const maxChildren = Math.max(oldNode.children.length,newNode.children.length);
+    const hasKeyedChildren = newNode.children.some(
+        (child) => typeof child === "object" && child.key !== null,
+    );
 
-    for(let index = 0;index< maxChildren;index++){
+    if (hasKeyedChildren) {
+        reconcileKeyedChildren(oldNode, newNode, domNode);
+        return;
+    }
+
+    //Positional reconcillation
+    const maxChildren = Math.max(
+        oldNode.children.length,
+        newNode.children.length,
+    );
+
+    for (let index = 0; index < maxChildren; index++) {
         const oldChild = oldNode.children[index];
         const newChild = newNode.children[index];
         const hasOldChild = oldChild !== undefined;
         const hasNewChild = newChild !== undefined;
 
         // both child exists - patch
-        if(typeof oldChild === 'object' && typeof newChild === 'object'){
+        if (typeof oldChild === "object" && typeof newChild === "object") {
             const childElement = domNode.childNodes[index];
-            if(childElement instanceof HTMLElement){
-                patch(oldChild, newChild, childElement)
+            if (childElement instanceof HTMLElement) {
+                patch(oldChild, newChild, childElement);
             }
         }
 
         //children text change
-        if(typeof newChild === 'string' && typeof oldChild === 'string' && oldChild !== newChild){
-            domNode.childNodes[index].textContent = newNode.children[index] as string;
+        if (
+            typeof newChild === "string" &&
+            typeof oldChild === "string" &&
+            oldChild !== newChild
+        ) {
+            domNode.childNodes[index].textContent = newNode.children[
+                index
+            ] as string;
         }
 
         // remove child
-        if(hasOldChild && !hasNewChild){
+        if (hasOldChild && !hasNewChild) {
             domNode.childNodes[newNode.children.length].remove();
             index -= 1;
         }
 
         //add child
-        if(hasNewChild && !hasOldChild){
-            if(typeof newChild === 'object'){
+        if (hasNewChild && !hasOldChild) {
+            if (typeof newChild === "object") {
                 const newChildElement = renderDom(newChild);
                 domNode.appendChild(newChildElement);
             }
-            if(typeof newChild === 'string'){
-                domNode.appendChild(document.createTextNode(newChild))
+            if (typeof newChild === "string") {
+                domNode.appendChild(document.createTextNode(newChild));
             }
         }
-
     }
-}
+};
