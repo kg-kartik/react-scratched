@@ -1,12 +1,25 @@
-import type { VNode, Child } from "./types.ts";
+import type { Child, Props, VNode, Key } from "./types.ts";
 import { patch } from "./diffingAlgo.ts";
+
+export const createElement = (
+    type: string,
+    key: Key,
+    props: Props,
+    ...children: Child[]
+): VNode => {
+    return {
+        type,
+        key,
+        props,
+        children,
+    };
+};
 
 export const renderDom = (
     element: Child,
     parentElement: HTMLElement | null = null,
-) :ChildNode => {
-
-    if(typeof element === 'string'){
+): ChildNode => {
+    if (typeof element === "string") {
         return document.createTextNode(element);
     }
 

@@ -2,7 +2,11 @@ import type { Child } from "./types.ts";
 import { renderDom } from "./utils.ts";
 import { reconcileKeyedChildren } from "./utils.ts";
 
-export const patch = (oldNode: Child, newNode: Child, domNode: ChildNode):ChildNode => {
+export const patch = (
+    oldNode: Child,
+    newNode: Child,
+    domNode: ChildNode,
+): ChildNode => {
     // textnode <-> textnode
     if (typeof oldNode === "string" && typeof newNode === "string") {
         if (oldNode !== newNode) {
@@ -29,7 +33,8 @@ export const patch = (oldNode: Child, newNode: Child, domNode: ChildNode):ChildN
 
     if (!(domNode instanceof HTMLElement)) return domNode;
 
-    if (typeof oldNode !== "object" || typeof newNode !== "object") return domNode;
+    if (typeof oldNode !== "object" || typeof newNode !== "object")
+        return domNode;
 
     //type change
     if (oldNode?.type !== newNode?.type) {

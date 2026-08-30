@@ -1,28 +1,19 @@
+import { renderDom, createElement } from "./utils.ts";
+import type { VNode } from "./types.ts";
+import { patch } from "./diffingAlgo.ts";
 
-import {createElement} from "./main.ts"
-import {renderDom} from "./utils.ts"
-import type {VNode} from "./types.ts";
-import {patch} from "./diffingAlgo.ts";
-
-const App = () => {
-    // returns Vnode
-    return createElement("h1",null,{},"Hello");
-}
-
-const rootElement = document.createElement("div");
-rootElement.setAttribute("id","root");
+const rootElement = document.querySelector("#app") as HTMLElement;
 
 let previousNode: VNode | null = null;
 let domElement: ChildNode | null = null;
 
-const renderComponent = (component:Function,root:HTMLElement) => {
+export const renderComponent = (component: Function, root: HTMLElement) => {
     const vNode = component();
-    
-    if(previousNode !== null && domElement !== null) {
+
+    if (previousNode !== null && domElement !== null) {
         //update dom
-        domElement = patch(previousNode,vNode,domElement);
-    }
-    else{
+        domElement = patch(previousNode, vNode, domElement);
+    } else {
         // first mount
         const currentDomElement = renderDom(vNode);
         domElement = currentDomElement;
@@ -30,7 +21,14 @@ const renderComponent = (component:Function,root:HTMLElement) => {
     }
 
     previousNode = vNode;
-}
+};
 
-renderComponent(App,rootElement); // initial call / mount
-renderComponent(App,rootElement); //update
+const App = (count: number) => {
+    // return Vnode object
+    return createElement("h1", null, {}, `Count: ${count}`);
+};
+
+export const renderAppWithProps = () => {
+    renderComponent(() => App(0), rootElement); // initial call / mount
+    renderComponent(() => App(1), rootElement); //update
+};
