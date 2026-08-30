@@ -13,14 +13,14 @@ const rootElement = document.createElement("div");
 rootElement.setAttribute("id","root");
 
 let previousNode: VNode | null = null;
-let domElement: HTMLElement | null = null;
+let domElement: ChildNode | null = null;
 
 const renderComponent = (component:Function,root:HTMLElement) => {
     const vNode = component();
     
     if(previousNode !== null && domElement !== null) {
         //update dom
-        patch(previousNode,vNode,domElement);
+        domElement = patch(previousNode,vNode,domElement);
     }
     else{
         // first mount

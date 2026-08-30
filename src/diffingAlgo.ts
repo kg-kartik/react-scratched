@@ -2,33 +2,34 @@ import type { Child } from "./types.ts";
 import { renderDom } from "./utils.ts";
 import { reconcileKeyedChildren } from "./utils.ts";
 
-export const patch = (oldNode: Child, newNode: Child, domNode: ChildNode) => {
+export const patch = (oldNode: Child, newNode: Child, domNode: ChildNode):ChildNode => {
     // textnode <-> textnode
     if (typeof oldNode === "string" && typeof newNode === "string") {
         if (oldNode !== newNode) {
             domNode.textContent = newNode;
         }
-        return;
+        return domNode;
     }
 
     // textnode <-> Vnode
     if (typeof oldNode === "string" && typeof newNode === "object") {
         const newElement = renderDom(newNode);
         domNode.replaceWith(newElement);
-        return;
+        return newElement;
     }
 
     // Vnode <-> textnode
     if (typeof oldNode === "object" && typeof newNode === "string") {
-        domNode.replaceWith(document.createTextNode(newNode));
-        return;
+        const textElement = document.createTextNode(newNode);
+        domNode.replaceWith(textElement);
+        return textElement;
     }
 
     // Narrow down types for VNode Objects
 
-    if (!(domNode instanceof HTMLElement)) return;
+    if (!(domNode instanceof HTMLElement)) return domNode;
 
-    if (typeof oldNode !== "object" || typeof newNode !== "object") return;
+    if (typeof oldNode !== "object" || typeof newNode !== "object") return domNode;
 
     //type change
     if (oldNode?.type !== newNode?.type) {
@@ -36,7 +37,7 @@ export const patch = (oldNode: Child, newNode: Child, domNode: ChildNode) => {
 
         domNode.replaceWith(newElement);
 
-        return;
+        return newElement;
     }
 
     //props changes
@@ -66,8 +67,7 @@ export const patch = (oldNode: Child, newNode: Child, domNode: ChildNode) => {
     );
 
     if (hasKeyedChildren) {
-        reconcileKeyedChildren(oldNode, newNode, domNode);
-        return;
+        return reconcileKeyedChildren(oldNode, newNode, domNode);
     }
 
     //Positional reconcillation
@@ -118,4 +118,5 @@ export const patch = (oldNode: Child, newNode: Child, domNode: ChildNode) => {
             }
         }
     }
+    return domNode;
 };

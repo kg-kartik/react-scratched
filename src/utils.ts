@@ -2,9 +2,14 @@ import type { VNode, Child } from "./types.ts";
 import { patch } from "./diffingAlgo.ts";
 
 export const renderDom = (
-    element: VNode,
+    element: Child,
     parentElement: HTMLElement | null = null,
-) => {
+) :ChildNode => {
+
+    if(typeof element === 'string'){
+        return document.createTextNode(element);
+    }
+
     const currentElement = document.createElement(element.type);
 
     // Apply props [Naive cases handlign]
@@ -33,7 +38,7 @@ export const renderDom = (
 export const reconcileKeyedChildren = (
     oldNode: VNode,
     newNode: VNode,
-    domNode: ChildNode,
+    domNode: HTMLElement,
 ) => {
     const keysMap: Map<VNode["key"], { oldChild: VNode; domChild: ChildNode }> =
         new Map();
@@ -49,7 +54,7 @@ export const reconcileKeyedChildren = (
 
     newNode.children.forEach((newChild, index) => {
         if (typeof newChild !== "object" || newChild?.key === null) {
-            return;
+            return domNode;
         }
 
         const match = keysMap.get(newChild?.key);
@@ -74,4 +79,6 @@ export const reconcileKeyedChildren = (
     keysMap.forEach(({ domChild }) => {
         domChild?.remove();
     });
+
+    return domNode;
 };
