@@ -46,7 +46,7 @@ export const patch = (oldNode: Child, newNode: Child, domNode: ChildNode):ChildN
 
     //prop there in oldNode but not in newNode or value is different
     oldNodeProps.forEach((prop) => {
-        if (prop in newNodeProps) {
+        if (prop in newNode.props) {
             if (oldNode.props[prop] !== newNode.props[prop]) {
                 domNode.setAttribute(prop, newNode.props[prop]);
             }
@@ -57,7 +57,7 @@ export const patch = (oldNode: Child, newNode: Child, domNode: ChildNode):ChildN
 
     //prop there in newNode but not in oldNode
     newNodeProps.forEach((prop) => {
-        if (!(prop in oldNodeProps)) {
+        if (!(prop in oldNode.props)) {
             (domNode as any)[prop] = newNode.props[prop];
         }
     });

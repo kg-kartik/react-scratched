@@ -34,7 +34,7 @@ export const renderDom = (
     return currentElement;
 };
 
-// keys Map (assuming all nodes to be VNode)
+// keys Map (assuming all child nodes to be VNode object)
 export const reconcileKeyedChildren = (
     oldNode: VNode,
     newNode: VNode,
