@@ -2,12 +2,13 @@ import type { Child } from "./types.ts";
 import { renderDom } from "./utils.ts";
 import { reconcileKeyedChildren } from "./utils.ts";
 
+// Compares old node and new node to update the existing DOM
 export const patch = (
     oldNode: Child,
     newNode: Child,
     domNode: ChildNode,
 ): ChildNode => {
-    // textnode <-> textnode
+    // Textnode <-> Textnode
     if (typeof oldNode === "string" && typeof newNode === "string") {
         if (oldNode !== newNode) {
             domNode.textContent = newNode;
@@ -15,28 +16,28 @@ export const patch = (
         return domNode;
     }
 
-    // textnode <-> Vnode
+    // Textnode <-> Vnode
     if (typeof oldNode === "string" && typeof newNode === "object") {
         const newElement = renderDom(newNode);
         domNode.replaceWith(newElement);
         return newElement;
     }
 
-    // Vnode <-> textnode
+    // Vnode <-> Textnode
     if (typeof oldNode === "object" && typeof newNode === "string") {
         const textElement = document.createTextNode(newNode);
         domNode.replaceWith(textElement);
         return textElement;
     }
 
-    // Narrow down types for VNode Objects
+    // Narrows down types for VNode Objects
 
     if (!(domNode instanceof HTMLElement)) return domNode;
 
     if (typeof oldNode !== "object" || typeof newNode !== "object")
         return domNode;
 
-    //type change
+    // Types change
     if (oldNode?.type !== newNode?.type) {
         const newElement = renderDom(newNode);
 
@@ -45,11 +46,11 @@ export const patch = (
         return newElement;
     }
 
-    //props changes
+    // Props changes
     const oldNodeProps = Object.keys(oldNode.props);
     const newNodeProps = Object.keys(newNode.props);
 
-    //prop there in oldNode but not in newNode or value is different
+    // Prop in oldNode but not in newNode or value is different
     oldNodeProps.forEach((prop) => {
         if (prop in newNode.props) {
             if (oldNode.props[prop] !== newNode.props[prop]) {
@@ -60,7 +61,7 @@ export const patch = (
         }
     });
 
-    //prop there in newNode but not in oldNode
+    // Prop in newNode but not in oldNode
     newNodeProps.forEach((prop) => {
         if (!(prop in oldNode.props)) {
             (domNode as any)[prop] = newNode.props[prop];
@@ -75,7 +76,7 @@ export const patch = (
         return reconcileKeyedChildren(oldNode, newNode, domNode);
     }
 
-    //Positional reconcillation
+    // Positional reconcillation
     const maxChildren = Math.max(
         oldNode.children.length,
         newNode.children.length,
@@ -87,7 +88,7 @@ export const patch = (
         const hasOldChild = oldChild !== undefined;
         const hasNewChild = newChild !== undefined;
 
-        // both child exists - patch
+        // Both child exists - patch
         if (typeof oldChild === "object" && typeof newChild === "object") {
             const childElement = domNode.childNodes[index];
             if (childElement instanceof HTMLElement) {
@@ -95,7 +96,7 @@ export const patch = (
             }
         }
 
-        //children text change
+        // Children text change
         if (
             typeof newChild === "string" &&
             typeof oldChild === "string" &&
@@ -106,13 +107,13 @@ export const patch = (
             ] as string;
         }
 
-        // remove child
+        // Removes child
         if (hasOldChild && !hasNewChild) {
             domNode.childNodes[newNode.children.length].remove();
             index -= 1;
         }
 
-        //add child
+        // Adds child
         if (hasNewChild && !hasOldChild) {
             if (typeof newChild === "object") {
                 const newChildElement = renderDom(newChild);

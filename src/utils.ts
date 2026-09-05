@@ -1,6 +1,7 @@
 import type { Child, Props, VNode, Key } from "./types.ts";
 import { patch } from "./diffingAlgo.ts";
 
+// Creates a Virtual DOM object
 export const createElement = (
     type: string,
     key: Key,
@@ -15,6 +16,7 @@ export const createElement = (
     };
 };
 
+// Renders a Virtual DOM object into Real DOM node
 export const renderDom = (
     element: Child,
     parentElement: HTMLElement | null = null,
@@ -25,7 +27,7 @@ export const renderDom = (
 
     const currentElement = document.createElement(element.type);
 
-    // Apply props [Naive cases handlign]
+    // Applies props [Naive cases handling]
     Object.entries(element.props).forEach(([key, value]) => {
         (currentElement as any)[key] = value;
     });
@@ -47,7 +49,7 @@ export const renderDom = (
     return currentElement;
 };
 
-// keys Map (assuming all child nodes to be VNode object)
+// Reconcilling children with keys (assuming all child nodes to be VNode object)
 export const reconcileKeyedChildren = (
     oldNode: VNode,
     newNode: VNode,
@@ -73,7 +75,7 @@ export const reconcileKeyedChildren = (
         const match = keysMap.get(newChild?.key);
 
         if (match?.domChild instanceof HTMLElement) {
-            //Patch old child
+            // Patches old child
             patch(match.oldChild, newChild, match.domChild);
 
             // Inserts the patched dom element before the current iterating node
@@ -82,13 +84,13 @@ export const reconcileKeyedChildren = (
             //deleting consumed key
             keysMap.delete(newChild.key);
         } else {
-            // key in new child but not in old child
+            // Key in new child but not in old child
             const newChildElement = renderDom(newChild);
             domNode.insertBefore(newChildElement, domNode.childNodes[index]);
         }
     });
 
-    //Keys still left in old child - those nodes no longer exist so need to be deleted
+    // Keys still left in old child - those nodes no longer exist so need to be deleted
     keysMap.forEach(({ domChild }) => {
         domChild?.remove();
     });
