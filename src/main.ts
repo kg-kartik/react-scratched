@@ -1,3 +1,4 @@
-import { renderAppWithProps } from "./renderComponent.ts";
+import {renderAppComponent,renderAppWithProps } from "./renderComponent.ts";
 
-renderAppWithProps();
+// renderAppWithProps();
+renderAppComponent();

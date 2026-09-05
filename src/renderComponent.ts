@@ -1,6 +1,7 @@
 import { renderDom, createElement } from "./utils.ts";
 import type { VNode } from "./types.ts";
 import { patch } from "./diffingAlgo.ts";
+import {useState,setComponentState} from "./hooks.ts"
 
 const rootElement = document.querySelector("#app") as HTMLElement;
 
@@ -8,6 +9,8 @@ let previousNode: VNode | null = null;
 let domElement: ChildNode | null = null;
 
 export const renderComponent = (component: Function, root: HTMLElement) => {
+    setComponentState(component.name);
+    
     const vNode = component();
 
     if (previousNode !== null && domElement !== null) {
@@ -32,3 +35,18 @@ export const renderAppWithProps = () => {
     renderComponent(() => App(0), rootElement); // initial call / mount
     renderComponent(() => App(1), rootElement); //update
 };
+
+const AppComp = () => {
+    const [count,setCount] = useState(0);
+
+    console.log(count);
+
+    setCount(1);
+
+    return createElement("h1", null, {}, `Count: ${count}`);
+}
+
+export const renderAppComponent = () => {
+    renderComponent(() => AppComp(),rootElement);
+    renderComponent(() => AppComp(),rootElement);
+}
