@@ -1,6 +1,7 @@
 const componentState: Record<string, any[]> = {};
 let currentComponent = "";
 let hookIndex = 0;
+let rerender:Function = () => {};
 
 export const useState = <T>(initValue: T):[T,(value:T) => void] => {
     if (!componentState[currentComponent]) {
@@ -20,6 +21,7 @@ export const useState = <T>(initValue: T):[T,(value:T) => void] => {
         if(state[currentIndex] !== value){
             state[currentIndex] = value;
         }
+        rerender();
     };
 
     const value = state[currentIndex];
@@ -30,7 +32,8 @@ export const useState = <T>(initValue: T):[T,(value:T) => void] => {
 };
 
 // Sets the current component state at the time of rendering
-export const setComponentState = (component:string) => {
+export const setComponentState = (component:string,rerenderFunc:Function) => {
     currentComponent = component;
     hookIndex = 0;
+    rerender = rerenderFunc;
 }

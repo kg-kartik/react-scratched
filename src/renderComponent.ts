@@ -9,15 +9,15 @@ let previousNode: VNode | null = null;
 let domElement: ChildNode | null = null;
 
 export const renderComponent = (component: Function, root: HTMLElement) => {
-    setComponentState(component.name);
+    setComponentState(component.name,() => renderComponent(component,root));
     
     const vNode = component();
 
     if (previousNode !== null && domElement !== null) {
-        //update dom
+        //Updates dom
         domElement = patch(previousNode, vNode, domElement);
     } else {
-        // first mount
+        // First mount
         const currentDomElement = renderDom(vNode);
         domElement = currentDomElement;
         root.appendChild(currentDomElement);
@@ -27,13 +27,13 @@ export const renderComponent = (component: Function, root: HTMLElement) => {
 };
 
 const App = (count: number) => {
-    // return Vnode object
+    //Returns Vnode object
     return createElement("h1", null, {}, `Count: ${count}`);
 };
 
 export const renderAppWithProps = () => {
-    renderComponent(() => App(0), rootElement); // initial call / mount
-    renderComponent(() => App(1), rootElement); //update
+    renderComponent(() => App(0), rootElement); // Initial call/mount
+    renderComponent(() => App(1), rootElement); // Updation
 };
 
 const AppComp = () => {
@@ -41,12 +41,14 @@ const AppComp = () => {
 
     console.log(count);
 
-    setCount(1);
+    setTimeout(() => {
+        setCount(1);
+    },2000)
+
 
     return createElement("h1", null, {}, `Count: ${count}`);
 }
 
 export const renderAppComponent = () => {
-    renderComponent(() => AppComp(),rootElement);
     renderComponent(() => AppComp(),rootElement);
 }
