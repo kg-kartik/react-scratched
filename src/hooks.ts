@@ -3,7 +3,9 @@ let currentComponent = "";
 let hookIndex = 0;
 let rerender: Function = () => {};
 
-export const useState = <T>(initValue: T): [T, (value: T) => void] => {
+export const useState = <T>(
+    initValue: T,
+): [T, (value: T | ((value: T) => T)) => void] => {
     if (!componentState[currentComponent]) {
         componentState[currentComponent] = [];
     }
@@ -16,9 +18,14 @@ export const useState = <T>(initValue: T): [T, (value: T) => void] => {
 
     const currentIndex = hookIndex;
 
-    const valueSetter = (value: T) => {
-        //updating only if the value changed
-        if (state[currentIndex] !== value) {
+    const valueSetter = (value: T | ((value: T) => T)) => {
+        if (typeof value === "function") {
+            // Calls the update function
+            state[currentIndex] = (value as (value: T) => T)(
+                state[currentIndex],
+            );
+        } else if (state[currentIndex] !== value) {
+            // Sets value only when changed
             state[currentIndex] = value;
         }
         rerender();
