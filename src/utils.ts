@@ -27,10 +27,8 @@ export const renderDom = (
 
     const currentElement = document.createElement(element.type);
 
-    // Applies props [Naive cases handling]
-    Object.entries(element.props).forEach(([key, value]) => {
-        (currentElement as any)[key] = value;
-    });
+    // Updates props
+    patchProps(currentElement, element.props, {});
 
     // Append to parent
     if (parentElement) {
@@ -47,6 +45,87 @@ export const renderDom = (
     });
 
     return currentElement;
+};
+
+// Updates props
+
+export const patchProps = (
+    domNode: HTMLElement,
+    newNodeProps: Props,
+    oldNodeProps: Props,
+) => {
+    Object.keys(oldNodeProps).forEach((oldProp) => {
+        if (!(oldProp in newNodeProps)) {
+            // Event listeners handling
+            if (oldProp.startsWith("on")) {
+                const eventName = oldProp.substring(2).toLowerCase();
+                const eventFunction = oldNodeProps[oldProp];
+                if (typeof eventFunction !== "function") {
+                    console.error("Invalid event listener");
+                    return;
+                }
+                // Removes event listner
+                domNode.removeEventListener(eventName, eventFunction);
+            } else if (oldProp === "style") {
+                // Removes inline styles
+                domNode.style.cssText = "";
+            } else if (oldProp === "className") {
+                // Removes the required prop
+                domNode.removeAttribute("class");
+            } else if (typeof oldNodeProps[oldProp] === "boolean") {
+                (domNode as any)[oldProp] = false;
+            } else {
+                // Removes attributes by default
+                domNode.removeAttribute(oldProp);
+            }
+        }
+    });
+
+    // Prop in newNode but not in oldNode or value got updated - Add/update the prop
+    Object.keys(newNodeProps).forEach((prop) => {
+        if (oldNodeProps[prop] !== newNodeProps[prop]) {
+            if (prop.startsWith("on")) {
+                const eventName = prop.substring(2).toLowerCase();
+                const eventFunction = newNodeProps[prop];
+                const oldEventFunction = oldNodeProps[prop];
+
+                if (typeof oldEventFunction === "function") {
+                    // Removes old event listener
+                    domNode.removeEventListener(eventName, oldEventFunction);
+                }
+
+                if (typeof eventFunction !== "function") {
+                    console.error("Invalid event listener");
+                    return;
+                }
+                // Adds event listner
+                domNode.addEventListener(eventName, eventFunction);
+            } else if (prop === "style") {
+                const stylesObject = newNodeProps[prop];
+
+                if (typeof stylesObject == "object") {
+                    // Removes inline styles for old object
+                    domNode.style.cssText = "";
+
+                    // Adds inline styles to the dom
+                    Object.keys(stylesObject).forEach((style) => {
+                        domNode.style.setProperty(
+                            style,
+                            newNodeProps[prop][style],
+                        );
+                    });
+                }
+            } else if (prop === "className") {
+                // Sets class attribute for new node
+                domNode.setAttribute("class", newNodeProps[prop]);
+            } else if (typeof newNodeProps[prop] === "boolean") {
+                const value = Boolean(newNodeProps[prop]);
+                (domNode as any)[prop] = value;
+            } else {
+                domNode.setAttribute(prop, newNodeProps[prop]);
+            }
+        }
+    });
 };
 
 // Reconcilling children with keys (assuming all child nodes to be VNode object)

@@ -1,6 +1,6 @@
 import type { Child } from "./types.ts";
 import { renderDom } from "./utils.ts";
-import { reconcileKeyedChildren } from "./utils.ts";
+import { reconcileKeyedChildren, patchProps } from "./utils.ts";
 
 // Compares old node and new node to update the existing DOM
 export const patch = (
@@ -46,27 +46,8 @@ export const patch = (
         return newElement;
     }
 
-    // Props changes
-    const oldNodeProps = Object.keys(oldNode.props);
-    const newNodeProps = Object.keys(newNode.props);
-
-    // Prop in oldNode but not in newNode or value is different
-    oldNodeProps.forEach((prop) => {
-        if (prop in newNode.props) {
-            if (oldNode.props[prop] !== newNode.props[prop]) {
-                domNode.setAttribute(prop, newNode.props[prop]);
-            }
-        } else {
-            domNode.removeAttribute(prop);
-        }
-    });
-
-    // Prop in newNode but not in oldNode
-    newNodeProps.forEach((prop) => {
-        if (!(prop in oldNode.props)) {
-            (domNode as any)[prop] = newNode.props[prop];
-        }
-    });
+    // Update change
+    patchProps(domNode, newNode.props, oldNode.props);
 
     const hasKeyedChildren = newNode.children.some(
         (child) => typeof child === "object" && child.key !== null,
