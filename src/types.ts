@@ -11,3 +11,11 @@ export type VNode = {
 };
 
 export type Child = string | VNode;
+
+export type ComponentDetails = {
+    hookValues: any[];
+    component: Function;
+    domNode: ChildNode | null;
+    vNode: VNode | null;
+    rerender: Function;
+};

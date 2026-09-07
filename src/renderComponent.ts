@@ -1,29 +1,52 @@
 import { renderDom, createElement } from "./utils.ts";
-import type { VNode } from "./types.ts";
+
+import type { ComponentDetails } from "./types.ts";
 import { patch } from "./diffingAlgo.ts";
-import { useState, setComponentState } from "./hooks.ts";
+import { useState, setCurrentComponentState } from "./hooks.ts";
 
 const rootElement = document.querySelector("#app") as HTMLElement;
 
-let previousNode: VNode | null = null;
-let domElement: ChildNode | null = null;
+// Stores component details
+let componentStore = new Map<Function, ComponentDetails>();
 
 export const renderComponent = (component: Function, root: HTMLElement) => {
-    setComponentState(component.name, () => renderComponent(component, root));
+    let currentComponentDetails = componentStore.get(component);
 
-    const vNode = component();
+    if (!currentComponentDetails) {
+        // Adds initial component details
+        currentComponentDetails = {
+            hookValues: [],
+            component,
+            domNode: null,
+            vNode: null,
+            rerender: () => {
+                if (currentComponentDetails) {
+                    renderComponent(currentComponentDetails.component, root);
+                }
+            },
+        };
 
-    if (previousNode !== null && domElement !== null) {
-        //Updates dom
-        domElement = patch(previousNode, vNode, domElement);
-    } else {
-        // First mount
-        const currentDomElement = renderDom(vNode);
-        domElement = currentDomElement;
-        root.appendChild(currentDomElement);
+        // Sets current component details for the particular component instance
+        componentStore.set(component, currentComponentDetails);
     }
 
-    previousNode = vNode;
+    setCurrentComponentState(currentComponentDetails);
+
+    // Returns the new virtual dom node for the component rendered
+    const newVNode = component();
+
+    const { vNode, domNode } = currentComponentDetails;
+
+    if (vNode !== null && domNode !== null) {
+        // Updates dom
+        currentComponentDetails.domNode = patch(vNode, newVNode, domNode);
+    } else {
+        // First mount
+        currentComponentDetails.domNode = renderDom(newVNode);
+        root.appendChild(currentComponentDetails.domNode);
+    }
+
+    currentComponentDetails.vNode = newVNode;
 };
 
 const App = (count: number) => {
@@ -38,21 +61,78 @@ export const renderAppWithProps = () => {
 
 const AppComp = () => {
     const [count, setCount] = useState(0);
+    const [name, setName] = useState("Kartik");
 
     const incrementCount = () => {
         setCount((prev) => prev + 1);
     };
 
+    const updateName = () => {
+        setName("kg");
+    };
+
     return createElement(
-        "button",
+        "div",
         null,
-        {
-            onclick: incrementCount,
-        },
-        `Count: ${count}`,
+        {},
+        createElement(
+            "button",
+            null,
+            {
+                onclick: incrementCount,
+            },
+            `Count: ${count}`,
+        ),
+        createElement(
+            "button",
+            null,
+            {
+                onclick: updateName,
+            },
+            `${name}`,
+        ),
+    );
+};
+
+const CopyComp = () => {
+    const [count, setCount] = useState(0);
+    const [name, setName] = useState("Kartik");
+
+    const incrementCount = () => {
+        setCount((prev) => prev + 1);
+    };
+
+    const updateName = () => {
+        setName("kg");
+    };
+
+    return createElement(
+        "div",
+        null,
+        {},
+        createElement(
+            "button",
+            null,
+            {
+                onclick: incrementCount,
+            },
+            `Count: ${count}`,
+        ),
+        createElement(
+            "button",
+            null,
+            {
+                onclick: updateName,
+            },
+            `${name}`,
+        ),
     );
 };
 
 export const renderAppComponent = () => {
-    renderComponent(() => AppComp(), rootElement);
+    renderComponent(AppComp, rootElement);
+};
+
+export const renderCopyComponent = () => {
+    renderComponent(CopyComp, rootElement);
 };
