@@ -95,38 +95,7 @@ const AppComp = () => {
 };
 
 const CopyComp = () => {
-    const [count, setCount] = useState(0);
-    const [name, setName] = useState("Kartik");
-
-    const incrementCount = () => {
-        setCount((prev) => prev + 1);
-    };
-
-    const updateName = () => {
-        setName("kg");
-    };
-
-    return createElement(
-        "div",
-        null,
-        {},
-        createElement(
-            "button",
-            null,
-            {
-                onclick: incrementCount,
-            },
-            `Count: ${count}`,
-        ),
-        createElement(
-            "button",
-            null,
-            {
-                onclick: updateName,
-            },
-            `${name}`,
-        ),
-    );
+    return AppComp();
 };
 
 export const renderAppComponent = () => {
